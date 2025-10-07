@@ -76,15 +76,20 @@ bool Player::Controls::recv_controls_message(Connection *connection_) {
 //-----------------------------------------
 
 Game::Game() : mt(0x15466666) {
+	if (obstacles.size() == 0)
+	{
+		obstacles.push_back({glm::vec2(-0.5f, -0.5f), glm::vec2(0.25f, 0.1f)});
+		obstacles.push_back({glm::vec2(0.5f, 0.5f), glm::vec2(0.05f, 0.2f)});
+		obstacles.push_back({glm::vec2(-0.3f, 0.4f), glm::vec2(0.05f, 0.3f)});
+		obstacles.push_back({glm::vec2(0.0f, 0.0f), glm::vec2(0.3f, 0.05f)});
+		obstacles.push_back({glm::vec2(0.4f, -0.3f), glm::vec2(0.05f, 0.3f)});
+	}
 }
 
 Player *Game::spawn_player() {
 	players.emplace_back();
 	Player &player = players.back();
 
-	//random point in the middle area of the arena:
-	// player.position.x = glm::mix(ArenaMin.x + 2.0f * PlayerRadius, ArenaMax.x - 2.0f * PlayerRadius, 0.4f + 0.2f * mt() / float(mt.max()));
-	// player.position.y = glm::mix(ArenaMin.y + 2.0f * PlayerRadius, ArenaMax.y - 2.0f * PlayerRadius, 0.4f + 0.2f * mt() / float(mt.max()));
 	if (players.size() == 1)
 	{
         player.position = ArenaMin + glm::vec2(PlayerRadius, PlayerRadius);
@@ -180,7 +185,30 @@ void Game::update(float elapsed) {
 	}
 
 	// obstacles detection:
-	{}
+	// reference: https://learnopengl.com/In-Practice/2D-Game/Collisions/Collision-detection
+	{
+		// obstacles detection:
+		for (auto &p : players)
+		{
+			for (auto &obs : obstacles)
+			{
+				glm::vec2 diff = p.position - obs.center;
+
+				glm::vec2 clamped = glm::clamp(diff, -obs.half_size, obs.half_size);
+				glm::vec2 closest = obs.center + clamped;
+
+				glm::vec2 delta = closest - p.position;
+				float length = glm::length2(delta);
+				if (length < PlayerRadius * PlayerRadius)
+				{
+					glm::vec2 overlapDir = glm::normalize(delta);
+					float overlap = PlayerRadius - std::sqrt(length);
+
+					if (length > 0.0f) p.position -= overlap * overlapDir;
+				}
+			}
+		}
+	}
 
 	Player* p1 = nullptr;
 	Player* p2 = nullptr;

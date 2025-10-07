@@ -56,12 +56,6 @@ PlayMode::PlayMode(Client &client_) : client(client_), p1Text(32.f), p2Text(32.f
 	p2Text.Set_Text("ME");
 	endText.Set_Text("You Made The Game!");
 
-	// if (game.obstacles.size() == 0)
-	// {
-	// 	game.obstacles.push_back({glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 1.0f)});
-    // 	game.obstacles.push_back({glm::vec2(4.0f, 2.0f), glm::vec2(0.5f, 3.0f)});
-	// }
-
 	arenaTexture = LoadTexture(data_path("background.png"));
 
 	float vertices[] = {
@@ -249,7 +243,18 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		}
 
 		// --- draw obstacles ---
-		{}
+		{
+			for (auto const &obs : game.obstacles)
+			{
+				glm::vec2 min = obs.center - obs.half_size;
+				glm::vec2 max = obs.center + obs.half_size;
+
+				lines.draw(glm::vec3(min.x, min.y, 0.0f), glm::vec3(max.x, min.y, 0.0f), glm::u8vec4(255, 0, 0, 255));
+				lines.draw(glm::vec3(max.x, min.y, 0.0f), glm::vec3(max.x, max.y, 0.0f), glm::u8vec4(255, 0, 0, 255));
+				lines.draw(glm::vec3(max.x, max.y, 0.0f), glm::vec3(min.x, max.y, 0.0f), glm::u8vec4(255, 0, 0, 255));
+				lines.draw(glm::vec3(min.x, max.y, 0.0f), glm::vec3(min.x, min.y, 0.0f), glm::u8vec4(255, 0, 0, 255));
+			}
+		}
 
 		for (auto const &player : game.players) {
 			glm::u8vec4 col = glm::u8vec4(player.color.x*255, player.color.y*255, player.color.z*255, 0xff);

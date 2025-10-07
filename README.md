@@ -9,7 +9,7 @@ This is a 2-player game where one player plays as “GA” and the other as “M
 
 The game uses a client/server model where the server maintains the game state and sends it to clients. Clients send input messages to the server, and the server responds with state messages containing player `positions`, `velocities`, `colors`, `names`, `IDs`, and `hasWin`. It is is implemented in `Game::send_state_message` and `Game::recv_state_message` in `Game.cpp`.
 
-Screen Shot:
+## Screen Shot:
 
 ![Screen Shot](screenshot.png)
 

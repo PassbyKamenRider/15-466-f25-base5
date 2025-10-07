@@ -71,8 +71,22 @@ int main(int argc, char **argv) {
 				if (evt == Connection::OnOpen) {
 					//client connected:
 
+					if (connection_to_player.size() >= 2)
+					{
+						std::cout << "Too many players!" << std::endl;
+						c->close();
+						remove_connection(c);
+					}
+
 					//create some player info for them:
-					connection_to_player.emplace(c, game.spawn_player());
+					Player *new_player = game.spawn_player();
+					new_player->id = 1;
+					for (auto &[conn, player] : connection_to_player) {
+						if (player->id == 1) new_player->id = 2;
+						if (player->id == 2) new_player->id = 1;
+					}
+					std::cout << "Player " << new_player->id << " joined the game." << std::endl;
+					connection_to_player.emplace(c, new_player);
 
 				} else if (evt == Connection::OnClose) {
 					//client disconnected:

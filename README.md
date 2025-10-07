@@ -1,20 +1,22 @@
-# (TODO: your game's title)
+# There Is No Game
 
-Author: (TODO: your name)
+Author: Yifan Jiang (yifanj3)
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+## Design:
+This is a 2-player game where one player plays as “GA” and the other as “ME.” The two must work together and stay connected to form “GAME.”
 
-Networking: (TODO: How does your game implement client/server multiplayer? What messages are transmitted? Where in the code?)
+## Networking:
+
+The game uses a client/server model where the server maintains the game state and sends it to clients. Clients send input messages to the server, and the server responds with state messages containing player `positions`, `velocities`, `colors`, `names`, `IDs`, and `hasWin`. It is is implemented in `Game::send_state_message` and `Game::recv_state_message` in `Game.cpp`.
 
 Screen Shot:
 
 ![Screen Shot](screenshot.png)
 
-How To Play:
+## How To Play:
+Use WASD to move around and form "GAME" with another player.
 
-(TODO: describe the controls and (if needed) goals/strategy.)
-
-Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
+## Sources:
 
 This game was built with [NEST](NEST.md).
 

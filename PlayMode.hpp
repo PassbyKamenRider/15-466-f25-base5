@@ -2,6 +2,7 @@
 
 #include "Connection.hpp"
 #include "Game.hpp"
+#include "Text.hpp"
 
 #include <glm/glm.hpp>
 
@@ -31,4 +32,9 @@ struct PlayMode : Mode {
 	//connection to server:
 	Client &client;
 
+	Text p1Text;
+	Text p2Text;
+	Text endText;
+
+	GLuint arenaTexture = 0;
 };

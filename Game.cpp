@@ -83,8 +83,16 @@ Player *Game::spawn_player() {
 	Player &player = players.back();
 
 	//random point in the middle area of the arena:
-	player.position.x = glm::mix(ArenaMin.x + 2.0f * PlayerRadius, ArenaMax.x - 2.0f * PlayerRadius, 0.4f + 0.2f * mt() / float(mt.max()));
-	player.position.y = glm::mix(ArenaMin.y + 2.0f * PlayerRadius, ArenaMax.y - 2.0f * PlayerRadius, 0.4f + 0.2f * mt() / float(mt.max()));
+	// player.position.x = glm::mix(ArenaMin.x + 2.0f * PlayerRadius, ArenaMax.x - 2.0f * PlayerRadius, 0.4f + 0.2f * mt() / float(mt.max()));
+	// player.position.y = glm::mix(ArenaMin.y + 2.0f * PlayerRadius, ArenaMax.y - 2.0f * PlayerRadius, 0.4f + 0.2f * mt() / float(mt.max()));
+	if (players.size() == 1)
+	{
+        player.position = ArenaMin + glm::vec2(PlayerRadius, PlayerRadius);
+    }
+	else
+	{
+		player.position = ArenaMax - glm::vec2(PlayerRadius, PlayerRadius);
+	}
 
 	do {
 		player.color.r = mt() / float(mt.max());
@@ -111,6 +119,7 @@ void Game::remove_player(Player *player) {
 }
 
 void Game::update(float elapsed) {
+	if (hasWin) return;
 	//position/velocity update:
 	for (auto &p : players) {
 		glm::vec2 dir = glm::vec2(0.0f, 0.0f);
@@ -161,33 +170,42 @@ void Game::update(float elapsed) {
 			if (len2 > (2.0f * PlayerRadius) * (2.0f * PlayerRadius)) continue;
 			if (len2 == 0.0f) continue;
 			glm::vec2 dir = p12 / std::sqrt(len2);
-			//mirror velocity to be in separating direction:
-			glm::vec2 v12 = p2.velocity - p1.velocity;
-			glm::vec2 delta_v12 = dir * glm::max(0.0f, -1.75f * glm::dot(dir, v12));
-			p2.velocity += 0.5f * delta_v12;
-			p1.velocity -= 0.5f * delta_v12;
+			float overlap = 2.0f * PlayerRadius - std::sqrt(len2);
+			p1.position -= 0.5f * overlap * dir;
+			p2.position += 0.5f * overlap * dir;
 		}
 		//player/arena collisions:
-		if (p1.position.x < ArenaMin.x + PlayerRadius) {
-			p1.position.x = ArenaMin.x + PlayerRadius;
-			p1.velocity.x = std::abs(p1.velocity.x);
+		p1.position.x = glm::clamp(p1.position.x, ArenaMin.x + PlayerRadius, ArenaMax.x - PlayerRadius);
+		p1.position.y = glm::clamp(p1.position.y, ArenaMin.y + PlayerRadius, ArenaMax.y - PlayerRadius);
+	}
+
+	// obstacles detection:
+	{}
+
+	Player* p1 = nullptr;
+	Player* p2 = nullptr;
+
+	for (auto &p : players) {
+		if (p.id == 1)
+		{
+			p1 = &p;
 		}
-		if (p1.position.x > ArenaMax.x - PlayerRadius) {
-			p1.position.x = ArenaMax.x - PlayerRadius;
-			p1.velocity.x =-std::abs(p1.velocity.x);
-		}
-		if (p1.position.y < ArenaMin.y + PlayerRadius) {
-			p1.position.y = ArenaMin.y + PlayerRadius;
-			p1.velocity.y = std::abs(p1.velocity.y);
-		}
-		if (p1.position.y > ArenaMax.y - PlayerRadius) {
-			p1.position.y = ArenaMax.y - PlayerRadius;
-			p1.velocity.y =-std::abs(p1.velocity.y);
+		else
+		{
+			p2 = &p;
 		}
 	}
 
+	if (p1 && p2)
+	{
+		if (std::abs(glm::length(p2->position - p1->position) - 2.0f * PlayerRadius) < 0.05f
+			&& p1->position.x < p2->position.x
+			&& std::abs(p1->position.y - p2->position.y) < 0.05f)
+		{
+			hasWin = true;
+		}
+	}
 }
-
 
 void Game::send_state_message(Connection *connection_, Player *connection_player) const {
 	assert(connection_);
@@ -200,7 +218,6 @@ void Game::send_state_message(Connection *connection_, Player *connection_player
 	connection.send(uint8_t(0));
 	size_t mark = connection.send_buffer.size(); //keep track of this position in the buffer
 
-
 	//send player info helper:
 	auto send_player = [&](Player const &player) {
 		connection.send(player.position);
@@ -212,6 +229,7 @@ void Game::send_state_message(Connection *connection_, Player *connection_player
 		uint8_t len = uint8_t(std::min< size_t >(255, player.name.size()));
 		connection.send(len);
 		connection.send_buffer.insert(connection.send_buffer.end(), player.name.begin(), player.name.begin() + len);
+		connection.send(player.id);
 	};
 
 	//player count:
@@ -221,6 +239,8 @@ void Game::send_state_message(Connection *connection_, Player *connection_player
 		if (&player == connection_player) continue;
 		send_player(player);
 	}
+
+	connection.send(hasWin);
 
 	//compute the message size and patch into the message header:
 	uint32_t size = uint32_t(connection.send_buffer.size() - mark);
@@ -270,7 +290,10 @@ bool Game::recv_state_message(Connection *connection_) {
 			read(&c);
 			player.name += c;
 		}
+		read(&player.id);
 	}
+
+	read(&hasWin);
 
 	if (at != size) throw std::runtime_error("Trailing data in state message.");
 

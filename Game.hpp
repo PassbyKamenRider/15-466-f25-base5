@@ -44,6 +44,13 @@ struct Player {
 
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
 	std::string name = "";
+	int id = 0;
+};
+
+struct Obstacle
+{
+	glm::vec2 center;
+	glm::vec2 half_size;
 };
 
 struct Game {
@@ -53,6 +60,9 @@ struct Game {
 
 	std::mt19937 mt; //used for spawning players
 	uint32_t next_player_number = 1; //used for naming players
+
+	bool hasWin = false;
+	std::vector<Obstacle> obstacles;
 
 	Game();
 
@@ -64,8 +74,8 @@ struct Game {
 	inline static constexpr float Tick = 1.0f / 30.0f;
 
 	//arena size:
-	inline static constexpr glm::vec2 ArenaMin = glm::vec2(-0.75f, -1.0f);
-	inline static constexpr glm::vec2 ArenaMax = glm::vec2( 0.75f,  1.0f);
+	inline static constexpr glm::vec2 ArenaMin = glm::vec2(-1.0f, -1.0f);
+	inline static constexpr glm::vec2 ArenaMax = glm::vec2( 1.0f,  1.0f);
 
 	//player constants:
 	inline static constexpr float PlayerRadius = 0.06f;
